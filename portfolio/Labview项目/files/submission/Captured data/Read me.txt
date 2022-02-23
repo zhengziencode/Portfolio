@@ -1,0 +1,5 @@
+Please use the matlab programme to process the data.
+
+Or if you want to examine the data, please be aware that:
+Each element in the torque data (a.tdms) has been added by 2048 to avoid negative values.
+Each element in the thrust force data (b.tdms) has been added 20480 to avoid negative values and be distinguishable to the torque data.

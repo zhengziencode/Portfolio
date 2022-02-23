@@ -1,0 +1,165 @@
+10 '=========================================
+20 '===   Robotic Assignment Part B       ===
+30 '===     Student Name:Zien Zheng       ===
+40 '===      Student ID:A00268964         ===
+50 '=== Aim:Pick up the cyclinder, test   ===
+60 '===  the colour and rotate an angle   ===
+70 '===  before assemble, and move to the ===
+80 '===      corresponding magazine .     ===
+90 '=========================================
+
+
+100 '======== Start of Main Function =========
+110 *MAINLOOP
+120 	GOSUB *DefVars		'Define the variables used in the program
+130 	GOSUB *Init			'Inilize the variables and set the status for TCP
+140		GOSUB *WPrt			'Waiting for part in the feeder
+150		GOSUB *GetPrt		'Pick up the part
+160		GOSUB *TestPrt		'Test the colour of the part
+170 	GOSUB *AssePrt		'Rotate the part and put on the assemble point
+180 	GOSUB *Drp2Mag		'Drop the part to the corresponding magazine
+190 	GOTO *MAINLOOP		'Go back and waiting for the next part in the feeder
+200 	END
+210 '========= End of Main Function ==========
+
+220 '======== Define error handling ==========
+230 *ErrL
+240		HLT					'If error occurs, stop the station
+250 '=== End of definition of error handle ===
+
+260 '========== Define Variables =============
+270 *DefVars
+280 	DEF IO PART_AV 	= BIT,8		'Define an input bit for check the part whether on the pedestal
+290 	DEF IO B1		= BIT,9		'Define an input bit for colour sensor 
+300 	DEF IO STOP_BTN	= BIT,0		'Define a bit for stop button
+310 	DEF IO RUNNING 	= BIT,0		'Define a bit_0 for monitoring the station if is running
+320 	DEF POS VECZ2				'Define a position correction value 
+330 	DEF POS VECZ50				'Define a position correction value 
+340 	DEF POS VECZ200				'Define a position correction value 
+350 	DEF POS AUXPOS				'Define the auxiliary position for TCP	
+360 	DEF POS GDIF				'Define a position variable for the distance difference between gripper 1 and gripper 2
+370 	DEF POS ROTAG				'Define a rotation angle for gripper
+380 	DEF INTE CYLTYPE			'Define a variable to save colour type of part
+390 	DEF INTE SLOW 				'Define a variable to save slow speed for movement of robotic arm
+400 	DEF INTE FAST 				'Define a variable to save fast speed for movement of robotic arm
+410 	RETURN						'Back to main function
+420 '======== End of Define Variables =========
+
+430 '========== Initilize Variables ===========
+440 *Init
+450 	VECZ2    = (+0.00,+0.00,+2.50,+0.00,+0.00)		'Assign with value 2.5 mm in z direction	
+460 	VECZ50   = (+0.00,+0.00,+50.00,+0.00,+0.00)  	'Assign with value 50 mm in z direction
+470 	VECZ200  = (+0.00,+0.00,+200.00,+0.00,+0.00) 	'Assign with value 200 mm in z direction
+480 	GDIF=(+40.00,+0.00,+0.00,+0.00,+0.00)			'Assign with value 40 mm distance difference for gripper 1 and 2
+490 	ROTAG=(+0.00,+0.00,+0.00,+45,+0.00)				'Assign rotation angle of 45 degrees
+500 	SLOW = 70										'90% of the movement speed
+510 	FAST = 90										'90% of the movement speed
+
+520 	DEF ACT 1,STOP_BTN = 1 GOSUB 530				'Define ACT
+530 	ACT 1 = 1										'The interuption should be resolved.(Valid interuption)
+540 		IF STOP_BTN = 1 THEN GOSUB 540				'Repeatly check the stop button status(1 is on, 0 is off) untill is off.
+550 		IF STOP_BTN = 0 THEN GOSUB 560				'Stop button is switch off
+560 	ACT 2 = 0										
+570 		RUNNING = 0									'Set the running status to 0 which shows the station is running
+
+580 	OVRD 50											'Overwrite the speed to half of original speed
+590 	HOPEN 1											'Open the gripper
+600 	SPD FAST										'Set the speed of robotic arm to fast level
+610 	RETURN											'Return to main function
+620 '========= End of Initilization ===========
+
+
+630 '===== Waiting for part in position =======
+640 *WPrt 
+650		IF PART_AV = 0 THEN *WPrt       	'Check if part is on the feeder	
+660		DLY 3								'Delay 3 seconds
+670		IF PART_AV = 0 THEN *WPrt 			'Recheck if part is on the feeder
+680		RUNNING = 0							'Set the station status to 0(is Running)
+690		RETURN 								'Return to main function
+700 '============ Part in Position ============
+
+710 '============ Pick up the Part ============
+720 *GetPrt
+730 	AUXPOS = P2+VECZ200					
+740		MOV AUXPOS							'Move the gripper 1 to 200mm above Pedestal
+750 	AUXPOS = P2+VECZ50        						
+760 	MOV AUXPOS							'Move the gripper 1 to 50mm above Pedestal
+770 	SPD SLOW							'Set the speed level to slow
+780 	MVS AUXPOS - VECZ50					'Gripper 1 reach the part 			
+790 	HCLOSE 1							'Pick up the part
+800 	DLY 1
+810 	MVS AUXPOS							'Move the part to 50mm above Pedestal			
+820 	SPD FAST							'Set the speed level to fast
+830 	AUXPOS = P2+VECZ200
+840 	MOV AUXPOS							'Move the part to 200mm above Pedestal
+850 	RETURN								'Return to main function
+860 '========= End of Pick up the Part ========
+
+870 '======== Test Colour of the Part =========
+880 *TestPrt
+890 	AUXPOS = P4 + VECZ50
+900 	MOV AUXPOS							'Move the part to 50mm above the part testing point
+910 	SPD SLOW							'Set the speed level to slow
+920 	MVS AUXPOS - VECZ50					'Part reach to the part testing point
+930 	HOPEN 1								'Release the part
+940 	MVS AUXPOS							'TCP 50mm above the part testing point
+950 	SPD FAST							'Set the speed level to fast
+960 	AUXPOS=P5+VECZ50					
+970 	MOV AUXPOS							'Move gripper test point to 50mm above the B1 sensor
+980 	SPD SLOW							'Set the speed level to slow
+990 	MVS AUXPOS-VECZ50					'Move gripper test point straightly to reach the B1 sensor
+1000 	DLY 1								'Delay 1 second
+1010 	CYLTYPE = B1						'Get the result from colour sensor B1
+1020 	MVS AUXPOS							'Move the gripper to 50mm above the B1 sensor
+1030 	SPD FAST							'Set the speed level to fast
+1040 	RETURN								'Return to main function
+1050 '========= End of testing colour ==========
+
+1060 '======= Move Part to Assemble Point ======
+1070 *AssePrt
+1080 	AUXPOS = P4+VECZ50-GDIF				'Change gripper 1 to gripper 2	
+1090 	MOV AUXPOS							'Move gripper 2 to 50mm above the part testing point
+1100 	SPD SLOW							'Set the speed level to slow
+1110 	IF CYLTYPE = 0 THEN MVS AUXPOS - VECZ50 - VECZ2 ELSE MVS AUXPOS - VECZ50
+1120										'Move gripper 2 straightly to the part	
+1130 	HCLOSE 1							'Pick up the part with gripper 2
+1140 	MVS AUXPOS							'Move the part to 50mm above part tesing point
+1150 	AUXPOS = P3-GDIF+VECZ50				'Assign the value for auxiliary position with use of gripper 2
+1160 	MOV AUXPOS							'Move part to 50mm above the assembly point
+1170 	IF CYLTYPE = 0 THEN AUXPOS = AUXPOS+ROTAG ELSE AUXPOS = AUXPOS-ROTAG	
+1180										'Assign the rotation angle(+/-45) depend on the colour of part
+1190 	MOV AUXPOS							'Execute the rotation movement in the horizontal plane
+1200 	MVS AUXPOS-VECZ50					'Move the part to the assembly point
+1210 	HOPEN 1								'Release the part							
+1220 	MOV AUXPOS+VECZ200					'Move the gripper to 200mm above the assembly point
+1230 	SPD FAST							'Set the speed level to fast
+1240 	RETURN								'Return to main function
+1250 '==== End of Moving to Assemble Point =====
+
+1260 '==== Move Part to Corresponding Mag. =====
+1270 *Drp2Mag
+1280 	AUXPOS = P3+VECZ50									'Set the auxiliary position 50mm above the assembly point
+1290 	IF CYLTYPE = 0 THEN AUXPOS = AUXPOS - VECZ2			'Black cyclinder is 2.5mm short than other cylinder
+1300 	MOV AUXPOS											'Move the gripper 1 to 50mm above the assembly point
+1310 	SPD SLOW											'Set the speed level to slow
+1320 	MVS AUXPOS - VECZ50									'Move gripper 1 straightly to the part on the assembly point with gripper 1
+1330 	HCLOSE 1											'Pick up the part
+1340 	MVS AUXPOS											'Move the part 50mm above the assembly point
+1350 	SPD FAST											'Set the speed level to fast
+1360 	MOV AUXPOS+VECZ200-VECZ50							'Move the part 200mm above the assembly point
+1370 	IF CYLTYPE = 0 THEN AUXPOS = P6 ELSE AUXPOS = P7	'Assign the position value for AUXPOS depend on the colour of part
+1380 	MOV AUXPOS+VECZ50									'Part is 50mm above the magazine
+1390 	SPD SLOW											'Set the speed level to slow
+1400 	MVS AUXPOS											'Move part straightly to the magazine
+1410 	HOPEN 1												'Release the part and it will drop into the magazine
+1420 	DLY 1												'Delay 1 second
+1430 	MVR AUXPOS + (0,20,0,0,0),AUXPOS+(20,0,0,0,0),AUXPOS-(20,0,0,0,0)	
+1440														'Use gripper test point scribe a circle 
+1450														'with radius of 20mm at the same magazine
+1460 	SPD FAST											'Set the speed level to fast							
+1470 	MOV P1												'Move TCP back to safe start point
+1480 	RETURN												'Back to main function
+1490 '========= End of Moving to Mag. ==========
+
+
+

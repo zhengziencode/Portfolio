@@ -1,0 +1,35 @@
+This folder contains the final report and 4 other folders.
+
+Captured data folder contains the following file:
+
+Readme.txt 
+a.tdms  (Torque data)
+b.tdms  (Thrust data)
+c.tdms  (Timedata)
+abc.csv (Overall data)
+
+labview folder contains the following file:
+
+FPGA_p(1).lvproj (Project file, please view other files through this project file)
+Read_FPGA.vi     (Main programme)
+FPGA_1.vi        (FPGA subVI)
+
+TDMS_error_detection folder contains the following file:
+
+Readme.txt   
+readTDMS.m         (function mfile)
+find_difference.m  (Main programme)
+a.tdms             (Torque data)
+v2p6 folder        (contains other function mfile)
+
+matlab folder contains the following file:
+
+Readme.txt
+main.m         (Main programme)
+SR.m           (function mfile)
+chauvenet.m    (function mfile)
+plot_average.m (function mfile)
+separation.m   (function mfile)
+plot_fft.m     (function mfile)
+plot_ifft.m    (function mfile)
+norminv.m      (function mfile)
